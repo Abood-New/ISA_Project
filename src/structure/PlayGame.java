@@ -1,170 +1,123 @@
 package structure;
 
 import java.util.List;
-import java.util.Random;
 import java.util.Scanner;
-
-import structure.ColorType;
-import structure.GameState;
-import structure.SpecialSquares;
-import structure.Stone;
-
-import static structure.MoveLogic.moveStoneToReBirth;
+import Algorithms.ExpectiMinimax;
 
 public class PlayGame {
-
     private Scanner scanner = new Scanner(System.in);
-    private Random random = new Random();
 
     // =========================
     // MAIN LOOP
     // =========================
     public void start(GameState state) {
-
         while (!isGameOver(state)) {
-
-            System.out.println("\n====================");
-            System.out.println("Current board:\n");
             System.out.println(state);
-
-            System.out.println("\n====================");
-            System.out.println("Current player: " + state.currentPlayer);
-
-            // 1. رمي العصي
-            int steps = throwSticks();
+            int steps = MoveProbability.throwSticks();
             System.out.println("Sticks result: " + steps);
 
-            // إذا ما في حركة
+            handleForcedJudgment(state, steps);
             if (steps == 0) {
                 System.out.println("No moves, turn skipped.");
                 switchTurn(state);
                 continue;
             }
-
-            // التحقق التلقائي من الحجارة على المربعات الخاصة 28 و 29
-            handleSpecialSquaresAutoValidation(state, steps);
-
-            // 2. اختيار الحجر
             Stone chosenStone;
             if (state.currentPlayer == ColorType.WHITE) {
-                chosenStone = chooseStoneFromUser(state);
+                chosenStone = ExpectiMinimax.findBestMove(state, steps);
             } else {
-                chosenStone = chooseStoneForComputer(state);
+                chosenStone = ExpectiMinimax.findBestMove(state, steps);
             }
 
-            // 3. تنفيذ الحركة
             if (chosenStone != null) {
                 MoveLogic.moveStone(state, chosenStone, steps);
+                System.out.println("Moved stone from " +
+                        (chosenStone.position - steps) + " to " + chosenStone.position);
+            } else {
+                System.out.println("No valid move available.");
             }
-
-            // 4. تبديل الدور
             switchTurn(state);
         }
-
         printWinner(state);
     }
 
-    // =========================
-    // رمي العصي (4 عصي)
-    // =========================
-    private int throwSticks() {
-        int sum = 0;
-        for (int i = 0; i < 4; i++) {
-            sum += random.nextInt(2); // 0 أو 1
-        }
-        return (sum == 0) ? 5 : sum;
-    }
+    // private Stone chooseStoneFromUser(GameState state, int steps) {
 
-    // =========================
-    // اختيار حجر المستخدم
-    // =========================
-    private Stone chooseStoneFromUser(GameState state) {
+    // List<Stone> stones = state.whiteStones;
+    // Stone selected = null;
 
-        List<Stone> stones = state.whiteStones;
-        Stone selected = null;
+    // // Find valid moves
+    // List<Stone> validStones = new java.util.ArrayList<>();
+    // for (Stone s : stones) {
+    // if (!s.isOut && isValidMoveForStone(state, s, steps)) {
+    // validStones.add(s);
+    // }
+    // }
 
-        while (selected == null) {
-            System.out.println("Your stones:");
-            for (Stone s : stones) {
-                if (!s.isOut) {
-                    System.out.print(s.position + " ");
-                }
-            }
-            System.out.println();
+    // if (validStones.isEmpty()) {
+    // System.out.println("No valid moves available.");
+    // return null;
+    // }
 
-            System.out.print("Choose stone position: ");
-            int pos = scanner.nextInt();
+    // while (selected == null) {
+    // System.out.println("Your stones with valid moves:");
+    // for (Stone s : validStones) {
+    // System.out.print(s.position + " ");
+    // }
+    // System.out.println();
 
-            for (Stone s : stones) {
-                if (!s.isOut && s.position == pos) {
-                    selected = s;
-                    break;
-                }
-            }
+    // System.out.print("Choose stone position: ");
+    // int pos = scanner.nextInt();
 
-            if (selected == null) {
-                System.out.println("Invalid stone, try again.");
-            }
-        }
-        return selected;
-    }
+    // for (Stone s : validStones) {
+    // if (s.position == pos) {
+    // selected = s;
+    // break;
+    // }
+    // }
 
-    // =========================
-    // اختيار حجر الكمبيوتر
-    // =========================
-    private Stone chooseStoneForComputer(GameState state) {
-
-        List<Stone> stones = state.blackStones;
-
-        for (Stone s : stones) {
-            if (!s.isOut) {
-                System.out.println("Computer chose stone at: " + s.position);
-                return s;
-            }
-        }
-        return null;
-    }
-
+    // if (selected == null) {
+    // System.out.println("Invalid stone or move, try again.");
+    // }
+    // }
+    // return selected;
+    // }
     // =========================
     // تبديل الدور
     // =========================
     private void switchTurn(GameState state) {
-        if (state.currentPlayer == ColorType.WHITE)
-            state.currentPlayer = ColorType.BLACK;
-        else
-            state.currentPlayer = ColorType.WHITE;
+        state.currentPlayer = (state.currentPlayer == ColorType.WHITE)
+                ? ColorType.BLACK
+                : ColorType.WHITE;
+        state.punishedThisTurn.clear();
     }
 
-    // =========================
-    // التحقق التلقائي من المربعات الخاصة 28 و 29
-    // =========================
-    private static void handleSpecialSquaresAutoValidation(
-            GameState state, int steps) {
-
-        List<Stone> currentPlayerStones = state.currentPlayer == ColorType.WHITE
+    private static void handleForcedJudgment(GameState state, int steps) {
+        List<Stone> stones = (state.currentPlayer == ColorType.WHITE)
                 ? state.whiteStones
                 : state.blackStones;
 
-        for (Stone stone : currentPlayerStones) {
+        for (Stone stone : stones) {
+
             if (stone.isOut)
                 continue;
 
-            // إذا الحجر على مربع 28 (threeTruths) يجب أن يكون الرمي 3 بالضبط
-            if (stone.position == SpecialSquares.threeTruths) {
-                if (steps != 3) {
-                    System.out.println(
-                            "Stone on square 28 requires exactly 3. Got " + steps + ". Moving back to rebirth.");
-                    moveStoneToReBirth(state, stone);
-                }
+            if (stone.position == SpecialSquares.water) {
+                MoveLogic.moveStoneToReBirth(state, stone);
+                // return true; // TURN ENDS
+            }
+            // Square 28: Three Truths
+            if (stone.position == SpecialSquares.threeTruths && steps != 3) {
+                MoveLogic.moveStoneToReBirth(state, stone);
+                state.punishedThisTurn.add(stone);
+                // return true; // TURN ENDS
             }
 
-            // إذا الحجر على مربع 29 (reAtoum) يجب أن يكون الرمي 2 بالضبط للخروج
-            if (stone.position == SpecialSquares.reAtoum) {
-                if (steps != 2) {
-                    System.out.println("Stone on square 29 requires exactly 2 to exit. Got " + steps
-                            + ". Moving back to rebirth.");
-                    moveStoneToReBirth(state, stone);
-                }
+            // Square 29: Re-Atoum
+            if (stone.position == SpecialSquares.reAtoum && steps != 2) {
+                MoveLogic.moveStoneToReBirth(state, stone);
+                state.punishedThisTurn.add(stone);
+                // return true; // TURN ENDS
             }
         }
     }

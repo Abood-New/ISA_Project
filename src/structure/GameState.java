@@ -1,48 +1,55 @@
 package structure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class GameState{
+public class GameState {
     public Board board;
     public ColorType currentPlayer;
     public List<Stone> blackStones;
     public List<Stone> whiteStones;
+    public Set<Stone> punishedThisTurn;
     public int blackStonesOut;
     public int whiteStonesOut;
+    public boolean debugMode;
 
-    public GameState(){
-        board=new Board();
-        whiteStones=new ArrayList<Stone>();
-        blackStones=new ArrayList<Stone>();
-        currentPlayer=ColorType.WHITE;
-        blackStonesOut=0;
-        whiteStonesOut=0;
+    public GameState() {
+        board = new Board();
+        whiteStones = new ArrayList<Stone>();
+        blackStones = new ArrayList<Stone>();
+        punishedThisTurn = new HashSet<Stone>();
+        currentPlayer = ColorType.WHITE;
+        blackStonesOut = 0;
+        whiteStonesOut = 0;
+        debugMode = false;
     }
 
-    public GameState copy(){
-        GameState newState= new GameState();
-        newState.board=this.board.copy();
-        newState.currentPlayer=this.currentPlayer;
-        newState.blackStonesOut=this.blackStonesOut;
-        newState.whiteStonesOut=this.whiteStonesOut;
-        for(Stone s:this.blackStones){
-            Stone newstone=new Stone(s.color,s.position);
-            newstone.isOut=s.isOut;
+    public GameState copy() {
+        GameState newState = new GameState();
+        newState.board = this.board.copy();
+        newState.currentPlayer = this.currentPlayer;
+        newState.blackStonesOut = this.blackStonesOut;
+        newState.whiteStonesOut = this.whiteStonesOut;
+        for (Stone s : this.blackStones) {
+            Stone newstone = new Stone(s.color, s.position);
+            newstone.isOut = s.isOut;
             newState.blackStones.add(newstone);
         }
-        for(Stone s:this.whiteStones){
-            Stone newstone= new Stone(s.color,s.position);
-            newstone.isOut=s.isOut;
+        for (Stone s : this.whiteStones) {
+            Stone newstone = new Stone(s.color, s.position);
+            newstone.isOut = s.isOut;
             newState.whiteStones.add(newstone);
         }
         return newState;
     }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(" ---- senet board ---- \n");
+        sb.append("\n ---- senet board ---- \n");
 
         // الصف الأول
         for (int i = 1; i <= 10; i++) {
@@ -70,6 +77,7 @@ public class GameState{
 
         return sb.toString();
     }
+
     private String printStone(Stone stone) {
 
         // مربع عادي فاضي
@@ -82,13 +90,13 @@ public class GameState{
 
             if (stone.color == ColorType.WHITE) {
                 return "[W" + stone.position + "," +
-                    SpecialSquares.getSquareType(stone.position) + "]";
+                        SpecialSquares.getSquareType(stone.position) + "]";
             } else if (stone.color == ColorType.BLACK) {
                 return "[B" + stone.position + "," +
-                    SpecialSquares.getSquareType(stone.position) + "]";
+                        SpecialSquares.getSquareType(stone.position) + "]";
             } else {
                 return "[" + SpecialSquares.getSquareType(stone.position) +
-                    "," + stone.position + "]";
+                        "," + stone.position + "]";
             }
         }
 
