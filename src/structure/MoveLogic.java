@@ -8,16 +8,11 @@ public class MoveLogic {
         int oldPos = stone.position;
         int newPos = oldPos + steps;
 
-        if (stone.position < SpecialSquares.happiness &&
-                newPos > SpecialSquares.happiness) {
-            System.out.println("Illegal move: must stop at square 26 first.");
-            return;
-        }
-
         if (oldPos < 26 && newPos > 26) {
             System.out.println("Illegal move: must stop at square 26 first.");
             return;
         }
+
         if (newPos > 30) {
             removeStone(state, stone);
             return;
@@ -42,6 +37,16 @@ public class MoveLogic {
 
         stone.position = newPos;
         state.board.stones[newPos] = stone;
+
+        if (stone.position < SpecialSquares.happiness &&
+                newPos > SpecialSquares.happiness) {
+            System.out.println("Illegal move: must stop at square 26 first.");
+            return;
+        }
+        if (stone.position == SpecialSquares.water) {
+            moveStoneToReBirth(state, stone); // silent for AI
+            return;
+        }
     }
 
     public static boolean isValidMove(GameState state, Stone stone, int steps) {
@@ -60,12 +65,7 @@ public class MoveLogic {
         if (state.punishedThisTurn.contains(stone)) {
             return false;
         }
-        // // Special square rules
-        // if (start == SpecialSquares.threeTruths && steps != 3)
-        // return false;
-        // if (start == SpecialSquares.reAtoum && steps != 2)
-        // return false;
-
+        // // Check for protected pairs
         // ColorType opponent = (state.currentPlayer == ColorType.WHITE)
         // ? ColorType.BLACK
         // : ColorType.WHITE;
@@ -93,7 +93,6 @@ public class MoveLogic {
         // }
         // }
 
-        // Can't move to same color
         Stone target = state.board.stones[newPos];
         if (target.color == stone.color)
             return false;

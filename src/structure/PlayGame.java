@@ -5,86 +5,110 @@ import java.util.Scanner;
 import Algorithms.ExpectiMinimax;
 
 public class PlayGame {
+    private PlayerType whitePlayer;
+    private PlayerType blackPlayer;
     private Scanner scanner = new Scanner(System.in);
 
-    // =========================
-    // MAIN LOOP
-    // =========================
+    public PlayGame(PlayerType whitePlayer, PlayerType blackPlayer) {
+        this.whitePlayer = whitePlayer;
+        this.blackPlayer = blackPlayer;
+    }
+
     public void start(GameState state) {
         while (!isGameOver(state)) {
+
             System.out.println(state);
+
             int steps = MoveProbability.throwSticks();
             System.out.println("Sticks result: " + steps);
 
             handleForcedJudgment(state, steps);
+
             if (steps == 0) {
                 System.out.println("No moves, turn skipped.");
                 switchTurn(state);
                 continue;
             }
-            Stone chosenStone;
-            if (state.currentPlayer == ColorType.WHITE) {
-                chosenStone = ExpectiMinimax.findBestMove(state, steps);
-            } else {
-                chosenStone = ExpectiMinimax.findBestMove(state, steps);
-            }
+
+            Stone chosenStone = chooseStone(state, steps);
 
             if (chosenStone != null) {
+                int oldPos = chosenStone.position;
                 MoveLogic.moveStone(state, chosenStone, steps);
-                System.out.println("Moved stone from " +
-                        (chosenStone.position - steps) + " to " + chosenStone.position);
+
+                if (chosenStone.isOut) {
+                    System.out.println("Moved stone from " + oldPos + " to exit");
+                } else {
+                    System.out.println("Moved stone from " + oldPos +
+                            " to " + chosenStone.position);
+                }
             } else {
                 System.out.println("No valid move available.");
             }
+
             switchTurn(state);
         }
+
         printWinner(state);
     }
 
-    // private Stone chooseStoneFromUser(GameState state, int steps) {
+    private Stone chooseStone(GameState state, int steps) {
 
-    // List<Stone> stones = state.whiteStones;
-    // Stone selected = null;
+        PlayerType controller = (state.currentPlayer == ColorType.WHITE)
+                ? whitePlayer
+                : blackPlayer;
 
-    // // Find valid moves
-    // List<Stone> validStones = new java.util.ArrayList<>();
-    // for (Stone s : stones) {
-    // if (!s.isOut && isValidMoveForStone(state, s, steps)) {
-    // validStones.add(s);
-    // }
-    // }
+        if (controller == PlayerType.HUMAN) {
+            return chooseStoneForUser(state, steps);
+        } else {
+            System.out.println("AI is thinking...");
+            return ExpectiMinimax.findBestMove(state, steps);
+        }
+    }
 
-    // if (validStones.isEmpty()) {
-    // System.out.println("No valid moves available.");
-    // return null;
-    // }
+    private Stone chooseStoneForUser(GameState state, int steps) {
+        List<Stone> stones = (state.currentPlayer == ColorType.WHITE)
+                ? state.whiteStones
+                : state.blackStones;
+        Stone selected = null;
 
-    // while (selected == null) {
-    // System.out.println("Your stones with valid moves:");
-    // for (Stone s : validStones) {
-    // System.out.print(s.position + " ");
-    // }
-    // System.out.println();
+        // Find valid moves
+        List<Stone> validStones = new java.util.ArrayList<>();
+        for (Stone s : stones) {
+            if (!s.isOut && MoveLogic.isValidMove(state, s, steps)) {
+                validStones.add(s);
+            }
+        }
 
-    // System.out.print("Choose stone position: ");
-    // int pos = scanner.nextInt();
+        if (validStones.isEmpty()) {
+            System.out.println("No valid moves available.");
+            return null;
+        }
 
-    // for (Stone s : validStones) {
-    // if (s.position == pos) {
-    // selected = s;
-    // break;
-    // }
-    // }
+        while (selected == null) {
+            System.out.println("Your stones with valid moves:");
+            for (Stone s : validStones) {
+                System.out.print(s.position + " ");
+            }
+            System.out.println();
 
-    // if (selected == null) {
-    // System.out.println("Invalid stone or move, try again.");
-    // }
-    // }
-    // return selected;
-    // }
-    // =========================
-    // تبديل الدور
-    // =========================
+            System.out.print("Choose stone position: ");
+            int pos = scanner.nextInt();
+
+            for (Stone s : validStones) {
+                if (s.position == pos) {
+                    selected = s;
+                    break;
+                }
+            }
+
+            if (selected == null) {
+                System.out.println("Invalid stone or move, try again.");
+            }
+        }
+        return selected;
+    }
+
     private void switchTurn(GameState state) {
         state.currentPlayer = (state.currentPlayer == ColorType.WHITE)
                 ? ColorType.BLACK
@@ -104,27 +128,19 @@ public class PlayGame {
 
             if (stone.position == SpecialSquares.water) {
                 MoveLogic.moveStoneToReBirth(state, stone);
-                // return true; // TURN ENDS
             }
-            // Square 28: Three Truths
             if (stone.position == SpecialSquares.threeTruths && steps != 3) {
                 MoveLogic.moveStoneToReBirth(state, stone);
                 state.punishedThisTurn.add(stone);
-                // return true; // TURN ENDS
             }
 
-            // Square 29: Re-Atoum
             if (stone.position == SpecialSquares.reAtoum && steps != 2) {
                 MoveLogic.moveStoneToReBirth(state, stone);
                 state.punishedThisTurn.add(stone);
-                // return true; // TURN ENDS
             }
         }
     }
 
-    // =========================
-    // نهاية اللعبة
-    // =========================
     private boolean isGameOver(GameState state) {
         return state.whiteStonesOut == 7 || state.blackStonesOut == 7;
     }

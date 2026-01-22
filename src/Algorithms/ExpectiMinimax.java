@@ -7,33 +7,6 @@ public class ExpectiMinimax {
 
     private static final int MAX_DEPTH = 4;
 
-    public static class ExpectiMinimaxResult {
-        public final Stone bestStone;
-        public final SearchDebugData debugData;
-
-        public ExpectiMinimaxResult(Stone bestStone, SearchDebugData debugData) {
-            this.bestStone = bestStone;
-            this.debugData = debugData;
-        }
-    }
-
-    public static class SearchDebugData {
-        public final boolean enabled;
-        public long nodesVisited = 0;
-        public double finalEvaluation = 0.0;
-        public java.util.List<String> nodeLogs = new java.util.ArrayList<>();
-
-        public SearchDebugData(boolean enabled) {
-            this.enabled = enabled;
-        }
-    }
-
-    /*
-     * =========================================================
-     * PUBLIC ENTRY POINT
-     * Dice is already rolled before calling this method
-     * =========================================================
-     */
     public static Stone findBestMove(GameState state, int steps) {
         boolean isMax = (state.currentPlayer == ColorType.WHITE);
 
@@ -70,11 +43,6 @@ public class ExpectiMinimax {
         return bestStone;
     }
 
-    /*
-     * =========================================================
-     * CORE EXPECTIMINIMAX
-     * =========================================================
-     */
     private static double expectiminimax(GameState state, int depth) {
         if (depth == 0 || isTerminal(state)) {
             return evaluate(state);
@@ -83,11 +51,6 @@ public class ExpectiMinimax {
         return chanceNode(state, depth);
     }
 
-    /*
-     * =========================================================
-     * CHANCE NODE (Dice Roll)
-     * =========================================================
-     */
     private static double chanceNode(GameState state, int depth) {
         boolean isMax = (state.currentPlayer == ColorType.WHITE);
         double expectedValue = 0.0;
@@ -108,11 +71,6 @@ public class ExpectiMinimax {
         return expectedValue;
     }
 
-    /*
-     * =========================================================
-     * MAX NODE (AI MOVE)
-     * =========================================================
-     */
     private static double maxNode(GameState state, int steps, int depth) {
         double bestValue = Double.NEGATIVE_INFINITY;
         boolean hasMove = false;
@@ -142,11 +100,6 @@ public class ExpectiMinimax {
         return bestValue;
     }
 
-    /*
-     * =========================================================
-     * MIN NODE (OPPONENT MOVE)
-     * =========================================================
-     */
     private static double minNode(GameState state, int steps, int depth) {
         double bestValue = Double.POSITIVE_INFINITY;
         boolean hasMove = false;
@@ -176,11 +129,6 @@ public class ExpectiMinimax {
         return bestValue;
     }
 
-    /*
-     * =========================================================
-     * EVALUATION FUNCTION (AI-CENTRIC)
-     * =========================================================
-     */
     private static double evaluate(GameState state) {
         if (state.whiteStonesOut == 7)
             return +10000;
@@ -214,11 +162,6 @@ public class ExpectiMinimax {
         return score;
     }
 
-    /*
-     * =========================================================
-     * HELPERS
-     * =========================================================
-     */
     private static boolean isTerminal(GameState state) {
         return state.blackStonesOut == 7 || state.whiteStonesOut == 7;
     }
