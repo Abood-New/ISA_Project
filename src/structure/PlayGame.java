@@ -2,7 +2,10 @@ package structure;
 
 import java.util.List;
 import java.util.Scanner;
+
+import Algorithms.AIConfig;
 import Algorithms.ExpectiMinimax;
+import Algorithms.SearchStatistics;
 
 public class PlayGame {
     private PlayerType whitePlayer;
@@ -30,12 +33,21 @@ public class PlayGame {
                 continue;
             }
 
-            Stone chosenStone = chooseStone(state, steps);
+            SearchStatistics stats = new SearchStatistics();
+
+            Stone chosenStone = chooseStone(state, steps, stats);
 
             if (chosenStone != null) {
                 int oldPos = chosenStone.position;
                 MoveLogic.moveStone(state, chosenStone, steps);
 
+                if (AIConfig.ANALYSIS_MODE) {
+                    String to = chosenStone.isOut
+                            ? "exit"
+                            : String.valueOf(chosenStone.position);
+                    System.out.println(
+                            stats.summary("move=" + oldPos + "->" + to, ExpectiMinimax.MAX_DEPTH));
+                }
                 if (chosenStone.isOut) {
                     System.out.println("Moved stone from " + oldPos + " to exit");
                 } else {
@@ -52,7 +64,7 @@ public class PlayGame {
         printWinner(state);
     }
 
-    private Stone chooseStone(GameState state, int steps) {
+    private Stone chooseStone(GameState state, int steps, SearchStatistics stats) {
 
         PlayerType controller = (state.currentPlayer == ColorType.WHITE)
                 ? whitePlayer
@@ -62,7 +74,7 @@ public class PlayGame {
             return chooseStoneForUser(state, steps);
         } else {
             System.out.println("AI is thinking...");
-            return ExpectiMinimax.findBestMove(state, steps);
+            return ExpectiMinimax.findBestMove(state, steps, stats);
         }
     }
 

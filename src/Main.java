@@ -15,6 +15,8 @@ import structure.PlayerType;
 // }
 import java.util.Scanner;
 
+import Algorithms.AIConfig;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -59,6 +61,9 @@ public class Main {
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + choice);
             }
+
+            System.out.print("Enable AI analysis mode? (y/n): ");
+            AIConfig.ANALYSIS_MODE = scanner.next().equalsIgnoreCase("y");
 
             GameState state = new GameState();
             Senet senetGame = new Senet();
